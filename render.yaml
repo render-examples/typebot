@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# Typebot wrapper. This repo does not contain the app.
+# Both services pull the official prebuilt images from Docker Hub.
+# To upgrade, bump the image tag below and push.
+# Upstream: https://github.com/baptisteArno/typebot.io
+
+previews:
+  generation: off
+
+projects:
+  - name: typebot
+    environments:
+      - name: production
+        services:
+          # Editor, dashboard, and API. Runs Prisma migrations on boot.
+          - type: web
+            name: typebot-builder
+            runtime: image
+            image:
+              url: docker.io/baptistearno/typebot-builder:3.19.1
+            plan: starter
+            region: oregon
+            numInstances: 1
+            # Typebot validates ENCRYPTION_SECRET as exactly 32 characters.
+            # generateValue is longer, so slice it before the upstream entrypoint.
+            dockerCommand: >-
+              bash -c 'export ENCRYPTION_SECRET="${ENCRYPTION_SEED:0:32}" && exec ./builder-entrypoint.sh'
+            envVars:
+              - key: PORT
+                value: "3000"
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: typebot-db
+                  property: connectionString
+              - key: ENCRYPTION_SEED
+                generateValue: true
+              - key: NEXTAUTH_URL
+                fromService:
+                  name: typebot-builder
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: NEXT_PUBLIC_VIEWER_URL
+                fromService:
+                  name: typebot-viewer
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: NODE_OPTIONS
+                value: --no-node-snapshot
+              # Gets an UNLIMITED workspace on first sign-in.
+              - key: ADMIN_EMAIL
+                sync: false
+              # Sign-in is by magic link, so SMTP is required.
+              - key: SMTP_HOST
+                sync: false
+              - key: SMTP_PORT
+                value: "587"
+              - key: SMTP_USERNAME
+                sync: false
+              - key: SMTP_PASSWORD
+                sync: false
+              - key: NEXT_PUBLIC_SMTP_FROM
+                sync: false
+
+          # Serves published bots and the chat API.
+          - type: web
+            name: typebot-viewer
+            runtime: image
+            image:
+              url: docker.io/baptistearno/typebot-viewer:3.19.1
+            plan: starter
+            region: oregon
+            numInstances: 1
+            dockerCommand: >-
+              bash -c 'export ENCRYPTION_SECRET="${ENCRYPTION_SEED:0:32}" && exec ./viewer-entrypoint.sh'
+            envVars:
+              - key: PORT
+                value: "3000"
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: typebot-db
+                  property: connectionString
+              # Must match the builder, or credentials saved in the builder
+              # cannot be decrypted when a bot runs.
+              - key: ENCRYPTION_SEED
+                fromService:
+                  name: typebot-builder
+                  type: web
+                  envVarKey: ENCRYPTION_SEED
+              - key: NEXTAUTH_URL
+                fromService:
+                  name: typebot-builder
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: NEXT_PUBLIC_VIEWER_URL
+                fromService:
+                  name: typebot-viewer
+                  type: web
+                  envVarKey: RENDER_EXTERNAL_URL
+              - key: NODE_OPTIONS
+                value: --no-node-snapshot
+
+        databases:
+          - name: typebot-db
+            databaseName: typebot
+            user: typebot
+            plan: basic-256mb
+            region: oregon
+            postgresMajorVersion: "16"
+            ipAllowList: []
