@@ -25,7 +25,7 @@ projects:
             # Typebot validates ENCRYPTION_SECRET as exactly 32 characters.
             # generateValue is longer, so slice it before the upstream entrypoint.
             dockerCommand: >-
-              bash -c 'export ENCRYPTION_SECRET="${ENCRYPTION_SEED:0:32}" && exec ./builder-entrypoint.sh'
+              bash -c export ENCRYPTION_SECRET="${ENCRYPTION_SEED:0:32}" && exec ./builder-entrypoint.sh
             envVars:
               - key: PORT
                 value: "3000"
@@ -72,7 +72,7 @@ projects:
             region: oregon
             numInstances: 1
             dockerCommand: >-
-              bash -c 'export ENCRYPTION_SECRET="${ENCRYPTION_SEED:0:32}" && exec ./viewer-entrypoint.sh'
+              bash -c export ENCRYPTION_SECRET="${ENCRYPTION_SEED:0:32}" && exec ./viewer-entrypoint.sh
             envVars:
               - key: PORT
                 value: "3000"
