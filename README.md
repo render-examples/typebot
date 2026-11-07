@@ -110,6 +110,8 @@ Prices from [Render's pricing page](https://render.com/pricing).
 | `typebot-db` (Basic 256 MB) | $6 |
 | **Total** | **~$20** |
 
+Starter fits a small team. In testing, one person editing and publishing a bot took the builder to about 370 MB of its 512 MB. Move `typebot-builder` to Standard (+$18) for heavier editing. The viewer used about 220 MB.
+
 ## Troubleshooting
 
 | Problem | Solution |
@@ -118,7 +120,7 @@ Prices from [Render's pricing page](https://render.com/pricing).
 | `ENCRYPTION_SECRET` validation error on boot | `ENCRYPTION_SEED` is missing or shorter than 32 characters. Check it on both services. |
 | Bots fail with credential errors after you rotated the key | Credentials are encrypted with the old key. Restore the old `ENCRYPTION_SEED` or re-add the credentials. |
 | Published bot links point at the wrong host | `NEXT_PUBLIC_VIEWER_URL` must be the viewer's public URL. Update it after you add a custom domain, on both services. |
-| OOM restarts on the builder | Move `typebot-builder` to Standard. |
+| OOM restarts on the builder | The editor is memory-heavy. Move `typebot-builder` to Standard. |
 
 ## Project Structure
 
